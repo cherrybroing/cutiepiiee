@@ -1,0 +1,1925 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loveflix - Ultimate Edition</title>
+    <!-- Tailwind CSS loaded locally / via standard CDN with configuration -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        if (typeof tailwind !== 'undefined') {
+            tailwind.config = {
+                darkMode: 'class',
+                theme: {
+                    extend: {
+                        colors: {
+                            netflixRed: '#E50914',
+                            netflixDark: '#141414',
+                            midnightPink: '#DB2777',
+                            electricBlue: '#2563EB',
+                            emeraldRomance: '#059669',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #141414;
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #141414;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #333333;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555555;
+        }
+        @keyframes pulseGlow {
+            0%, 100% { transform: scale(1); text-shadow: 0 0 20px rgba(229, 9, 20, 0.8), 0 0 40px rgba(229, 9, 20, 0.4); }
+            50% { transform: scale(1.08); text-shadow: 0 0 35px rgba(229, 9, 20, 1), 0 0 70px rgba(229, 9, 20, 0.7); }
+        }
+        .intro-l {
+            animation: pulseGlow 2s infinite ease-in-out;
+        }
+        .glass-panel {
+            background: rgba(20, 20, 20, 0.88);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .theme-netflix { --accent: #E50914; --accent-hover: #b20710; }
+        .theme-midnight { --accent: #DB2777; --accent-hover: #be185d; }
+        .theme-electric { --accent: #2563EB; --accent-hover: #1d4ed8; }
+        .theme-emerald { --accent: #059669; --accent-hover: #047857; }
+        .bg-accent { background-color: var(--accent, #E50914); }
+        .text-accent { color: var(--accent, #E50914); }
+        .border-accent { border-color: var(--accent, #E50914); }
+        .hover\:bg-accent-hover:hover { background-color: var(--accent-hover, #b20710); }
+        .netflix-gradient {
+            background: linear-gradient(180deg, rgba(20,20,20,0) 0%, rgba(20,20,20,0.8) 70%, rgba(20,20,20,1) 100%);
+        }
+    </style>
+</head>
+<body class="theme-netflix min-h-screen flex flex-col selection:bg-red-600 selection:text-white">
+
+    <!-- 1. CINEMATIC INTRO ANIMATION -->
+    <div id="cinematic-intro" class="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center transition-opacity duration-1000">
+        <div class="intro-l text-7xl md:text-9xl font-black text-red-600 tracking-tighter cursor-default">
+            L
+        </div>
+        <div class="mt-4 text-xs md:text-sm uppercase tracking-[0.5em] text-neutral-400 font-semibold animate-pulse">
+            LOVEFLIX ULTIMATE EDITION
+        </div>
+    </div>
+
+    <!-- 2. PROFILE GATE SCREEN -->
+    <div id="profile-gate" class="fixed inset-0 z-40 bg-neutral-950 flex flex-col items-center justify-center p-6 hidden">
+        <div class="max-w-4xl w-full text-center">
+            <h1 class="text-4xl md:text-5xl font-extrabold mb-3 tracking-tight">Who's watching?</h1>
+            <p class="text-neutral-400 mb-10 text-sm md:text-base">Select your profile to enter our cinematic universe</p>
+            
+            <div id="profiles-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 justify-center items-center max-w-2xl mx-auto mb-10">
+                <!-- Dynamically rendered profiles -->
+            </div>
+
+            <div class="flex justify-center space-x-4">
+                <button onclick="openProfileManagerModal()" class="px-6 py-2.5 rounded-full border border-neutral-700 text-neutral-300 hover:text-white hover:border-white text-sm font-medium transition duration-200">
+                    Manage Profiles
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PIN MODAL FOR CHERRY ADMIN -->
+    <div id="pin-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="glass-panel p-8 rounded-2xl max-w-md w-full text-center shadow-2xl border border-neutral-800">
+            <div class="w-16 h-16 bg-red-600/20 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">🍒</div>
+            <h3 class="text-2xl font-bold mb-2">Cherry Admin Access</h3>
+            <p class="text-neutral-400 text-sm mb-6">Enter 4-digit PIN (Default: 1234)</p>
+            
+            <form onsubmit="verifyPin(event)" class="space-y-4">
+                <input type="password" id="pin-input" maxlength="4" placeholder="••••" autofocus
+                    class="w-40 text-center text-3xl tracking-widest bg-neutral-900 border border-neutral-700 rounded-xl py-3 text-white focus:outline-none focus:border-red-600 mx-auto block">
+                <div id="pin-error" class="text-red-500 text-xs hidden">Incorrect PIN. Try 1234.</div>
+                <div class="flex space-x-3 pt-2">
+                    <button type="button" onclick="closePinModal()" class="flex-1 py-3 bg-neutral-800 hover:bg-neutral-700 rounded-xl font-medium transition text-sm">Cancel</button>
+                    <button type="submit" class="flex-1 py-3 bg-red-600 hover:bg-red-700 rounded-xl font-medium transition text-sm">Unlock</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- PROFILE MANAGER & EDIT MODAL -->
+    <div id="profile-manager-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="glass-panel p-6 sm:p-8 rounded-2xl max-w-lg w-full shadow-2xl border border-neutral-800 max-h-[90vh] overflow-y-auto">
+            <h3 id="profile-modal-title" class="text-2xl font-bold mb-4">Manage Profiles & Avatars</h3>
+            
+            <div id="profile-edit-form-container" class="mb-6 pb-6 border-b border-neutral-800">
+                <h4 class="text-sm font-bold text-pink-400 mb-3">Add / Edit Profile</h4>
+                <form onsubmit="handleSaveProfile(event)" class="space-y-4">
+                    <input type="hidden" id="edit-profile-id" value="">
+                    <div>
+                        <label class="block text-xs font-semibold text-neutral-400 uppercase mb-1">Profile Name</label>
+                        <input type="text" id="manage-profile-name" required placeholder="e.g. Baby 💖"
+                            class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-3 text-white focus:outline-none focus:border-red-600 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-neutral-400 uppercase mb-1">Avatar Image URL or DiceBear Seed</label>
+                        <input type="url" id="manage-profile-avatar" placeholder="https://... or leave blank"
+                            class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-3 text-white focus:outline-none focus:border-red-600 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-neutral-400 uppercase mb-1">Or Upload Local Image File / Cherry Vault Art</label>
+                        <input type="file" id="manage-profile-file" accept="image/*" onchange="handleProfileLocalFile(event)"
+                            class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-2.5 text-neutral-400 text-sm file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-pink-600 file:text-white hover:file:bg-pink-700 cursor-pointer">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-neutral-400 uppercase mb-1">Or Pick from Cherry Vault Posters</label>
+                        <select id="manage-profile-vault-select" onchange="selectVaultAvatar(this.value)"
+                            class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-3 text-white focus:outline-none focus:border-red-600 text-sm">
+                            <option value="">-- Choose from Vault / Movies / Shows --</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center space-x-3 pt-2">
+                        <input type="checkbox" id="manage-profile-pin" class="w-4 h-4 rounded bg-neutral-900 border-neutral-700 text-red-600 focus:ring-0">
+                        <label for="manage-profile-pin" class="text-sm text-neutral-300">Requires PIN Protection (1234)</label>
+                    </div>
+                    <button type="submit" class="w-full py-3 bg-accent hover:bg-accent-hover rounded-xl font-medium transition text-sm text-white">Save Profile</button>
+                </form>
+            </div>
+
+            <h4 class="text-sm font-bold text-neutral-300 mb-3">Existing Profiles (Click to Edit)</h4>
+            <div id="profiles-manage-list" class="space-y-2 mb-6">
+                <!-- Render profiles for management -->
+            </div>
+
+            <button onclick="closeProfileManagerModal()" class="w-full py-3 bg-neutral-800 hover:bg-neutral-700 rounded-xl font-medium transition text-sm">Close</button>
+        </div>
+    </div>
+
+    <!-- 3. NAVIGATION NAVBAR -->
+    <header id="main-header" class="fixed top-0 left-0 right-0 z-30 transition-all duration-300 px-4 sm:px-12 py-4 flex items-center justify-between bg-gradient-to-b from-black/90 via-black/50 to-transparent">
+        <div class="flex items-center space-x-8">
+            <span class="text-2xl font-black text-accent tracking-tighter cursor-pointer drop-shadow-md" onclick="switchTab('home')">LOVEFLIX</span>
+            <nav class="hidden md:flex items-center space-x-6 text-sm font-medium text-neutral-300">
+                <button onclick="switchTab('home')" class="nav-link hover:text-white transition text-white" data-target="home">Home</button>
+                <button onclick="switchTab('movies')" class="nav-link hover:text-white transition" data-target="movies">Movies</button>
+                <button onclick="switchTab('shows')" class="nav-link hover:text-white transition" data-target="shows">TV Shows</button>
+                <button onclick="switchTab('couplehub')" class="nav-link hover:text-white transition" data-target="couplehub">Couple Hub</button>
+                <button onclick="switchTab('sharedroom')" class="nav-link hover:text-white transition" data-target="sharedroom">Shared Room</button>
+                <button id="nav-cherry-vault" onclick="switchTab('vault')" class="nav-link hover:text-pink-400 transition hidden text-pink-500 font-semibold" data-target="vault">🍒 Cherry Vault</button>
+            </nav>
+        </div>
+
+        <div class="flex items-center space-x-4">
+            <button onclick="openThemeModal()" class="p-2 rounded-full bg-neutral-900/80 hover:bg-neutral-800 text-neutral-300 hover:text-white transition border border-neutral-800" title="Theme Customizer">
+                🎨
+            </button>
+            <div class="flex items-center space-x-2 cursor-pointer bg-neutral-900/90 border border-neutral-800 rounded-full px-3 py-1.5 hover:border-neutral-600 transition" onclick="openProfileManagerModal()" title="Manage Profiles">
+                <img id="current-profile-avatar" src="" alt="Profile" class="w-7 h-7 rounded-full object-cover">
+                <span id="current-profile-name" class="text-xs font-semibold text-white hidden sm:inline">Diyaa</span>
+                <span class="text-[10px] text-neutral-400">⚙️</span>
+            </div>
+            <button onclick="switchProfilePrompt()" class="px-3 py-1.5 rounded-full bg-red-600/20 hover:bg-red-600/40 border border-red-600/30 text-red-400 text-xs font-semibold transition flex items-center space-x-1" title="Switch Profile">
+                <span>🔄</span> <span class="hidden sm:inline">Switch</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- MOBILE NAV BOTTOM BAR -->
+    <div class="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-neutral-950/95 backdrop-blur-lg border-t border-neutral-800 px-4 py-3 flex justify-around items-center text-xs">
+        <button onclick="switchTab('home')" class="flex flex-col items-center text-neutral-300 hover:text-white"><span>🏠</span><span>Home</span></button>
+        <button onclick="switchTab('movies')" class="flex flex-col items-center text-neutral-300 hover:text-white"><span>🎬</span><span>Movies</span></button>
+        <button onclick="switchTab('shows')" class="flex flex-col items-center text-neutral-300 hover:text-white"><span>📺</span><span>Shows</span></button>
+        <button onclick="switchTab('couplehub')" class="flex flex-col items-center text-neutral-300 hover:text-white"><span>👩‍❤️‍👨</span><span>Hub</span></button>
+        <button onclick="switchTab('sharedroom')" class="flex flex-col items-center text-neutral-300 hover:text-white"><span>🍿</span><span>Room</span></button>
+        <button onclick="switchProfilePrompt()" class="flex flex-col items-center text-red-400"><span>🔄</span><span>Switch</span></button>
+        <button id="mobile-nav-vault" onclick="switchTab('vault')" class="flex flex-col items-center text-pink-500 hidden"><span>🍒</span><span>Vault</span></button>
+    </div>
+
+    <!-- THEME CUSTOMIZER MODAL -->
+    <div id="theme-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="glass-panel p-8 rounded-2xl max-w-md w-full shadow-2xl border border-neutral-800 text-center">
+            <h3 class="text-2xl font-bold mb-2">Theme Customizer</h3>
+            <p class="text-neutral-400 text-sm mb-6">Choose our aesthetic color palette</p>
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <button onclick="setTheme('netflix')" class="p-4 rounded-xl bg-neutral-900 border border-neutral-700 hover:border-red-600 flex flex-col items-center space-y-2 transition">
+                    <span class="w-8 h-8 rounded-full bg-red-600 block"></span>
+                    <span class="text-sm font-semibold">Netflix Red</span>
+                </button>
+                <button onclick="setTheme('midnight')" class="p-4 rounded-xl bg-neutral-900 border border-neutral-700 hover:border-pink-600 flex flex-col items-center space-y-2 transition">
+                    <span class="w-8 h-8 rounded-full bg-pink-600 block"></span>
+                    <span class="text-sm font-semibold">Midnight Pink</span>
+                </button>
+                <button onclick="setTheme('electric')" class="p-4 rounded-xl bg-neutral-900 border border-neutral-700 hover:border-blue-600 flex flex-col items-center space-y-2 transition">
+                    <span class="w-8 h-8 rounded-full bg-blue-600 block"></span>
+                    <span class="text-sm font-semibold">Electric Blue</span>
+                </button>
+                <button onclick="setTheme('emerald')" class="p-4 rounded-xl bg-neutral-900 border border-neutral-700 hover:border-emerald-600 flex flex-col items-center space-y-2 transition">
+                    <span class="w-8 h-8 rounded-full bg-emerald-600 block"></span>
+                    <span class="text-sm font-semibold">Emerald Romance</span>
+                </button>
+            </div>
+            <button onclick="closeThemeModal()" class="w-full py-3 bg-neutral-800 hover:bg-neutral-700 rounded-xl font-medium transition text-sm">Close</button>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="flex-1 pb-24 md:pb-12">
+
+        <!-- TAB: HOME -->
+        <section id="tab-home" class="tab-content">
+            <!-- 1. DYNAMIC NETFLIX-STYLE HERO CAROUSEL -->
+            <div id="hero-carousel" class="relative h-[75vh] w-full flex items-end bg-cover bg-center transition-all duration-700">
+                <div class="absolute inset-0 bg-gradient-to-t from-[#141414] via-[#141414]/30 to-black/60"></div>
+                
+                <!-- Hero content container -->
+                <div class="relative z-10 max-w-3xl p-6 md:p-16 mb-6">
+                    <div class="flex items-center space-x-3 mb-3">
+                        <span class="px-2.5 py-0.5 bg-accent text-white text-[10px] font-extrabold rounded uppercase tracking-wider">TOP 10 #1</span>
+                        <span id="hero-genre" class="text-xs font-bold text-neutral-300 uppercase tracking-widest">Romance / Drama</span>
+                    </div>
+                    <h1 id="hero-title" class="text-4xl md:text-6xl font-black mb-3 tracking-tight drop-shadow-lg">Featured Title</h1>
+                    <p id="hero-desc" class="text-neutral-300 text-sm md:text-base mb-6 line-clamp-3 leading-relaxed drop-shadow">Synopses and cinematic details...</p>
+                    <div class="flex items-center space-x-4">
+                        <button id="hero-play-btn" class="flex items-center space-x-2 px-8 py-3.5 bg-white hover:bg-neutral-200 text-black font-bold rounded-xl transition shadow-xl text-sm md:text-base">
+                            <span>▶</span> <span>Play</span>
+                        </button>
+                        <button id="hero-info-btn" class="flex items-center space-x-2 px-8 py-3.5 bg-neutral-500/40 hover:bg-neutral-500/60 text-white font-bold rounded-xl backdrop-blur-md transition border border-neutral-400/30 text-sm md:text-base">
+                            <span>ℹ️</span> <span>More Info</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Carousel Controls Indicator -->
+                <div class="absolute right-6 bottom-8 z-20 flex items-center space-x-2">
+                    <button onclick="prevHeroSlide()" class="w-10 h-10 rounded-full bg-black/60 hover:bg-black text-white flex items-center justify-center border border-neutral-700 transition">❮</button>
+                    <span id="hero-slide-indicator" class="text-xs font-semibold text-neutral-300 px-2">1 / 3</span>
+                    <button onclick="nextHeroSlide()" class="w-10 h-10 rounded-full bg-black/60 hover:bg-black text-white flex items-center justify-center border border-neutral-700 transition">❯</button>
+                </div>
+            </div>
+
+            <!-- Categories / Rows -->
+            <div class="px-4 sm:px-12 py-8 space-y-10 -mt-16 relative z-20">
+                <div>
+                    <h2 class="text-xl md:text-2xl font-bold mb-4 flex items-center space-x-2"><span>🍿</span> <span>Recommended For Us</span></h2>
+                    <div id="row-recommended" class="flex space-x-4 overflow-x-auto pb-4 scrollbar-none"></div>
+                </div>
+
+                <div>
+                    <h2 class="text-xl md:text-2xl font-bold mb-4 flex items-center space-x-2"><span>❤️</span> <span>Cherry & Diyaa's Favorites</span></h2>
+                    <div id="row-favorites" class="flex space-x-4 overflow-x-auto pb-4 scrollbar-none"></div>
+                </div>
+
+                <div>
+                    <h2 class="text-xl md:text-2xl font-bold mb-4 flex items-center space-x-2"><span>📺</span> <span>Binge-Worthy TV Series</span></h2>
+                    <div id="row-shows" class="flex space-x-4 overflow-x-auto pb-4 scrollbar-none"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB: MOVIES -->
+        <section id="tab-movies" class="tab-content hidden px-4 sm:px-12 pt-28">
+            <h1 class="text-3xl font-extrabold mb-2">Movies Catalog</h1>
+            <p class="text-neutral-400 mb-8 text-sm">Standalone romantic movies, blockbusters, and home uploads.</p>
+            <div id="movies-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6"></div>
+        </section>
+
+        <!-- TAB: SHOWS -->
+        <section id="tab-shows" class="tab-content hidden px-4 sm:px-12 pt-28">
+            <h1 class="text-3xl font-extrabold mb-2">TV Series Catalog</h1>
+            <p class="text-neutral-400 mb-8 text-sm">Multi-season shows with custom episode pickers.</p>
+            <div id="shows-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6"></div>
+        </section>
+
+        <!-- TAB: COUPLE HUB -->
+        <section id="tab-couplehub" class="tab-content hidden px-4 sm:px-12 pt-28 max-w-7xl mx-auto space-y-12">
+            <div>
+                <h1 class="text-3xl font-extrabold mb-2">Couple Hub & Interactive Zone</h1>
+                <p class="text-neutral-400 text-sm">Everything built specially for us: Virtual pet, date picker wheel, snack mini-game, schedule, and diary.</p>
+            </div>
+
+            <!-- Pet Zone -->
+            <div class="glass-panel p-6 rounded-2xl border border-neutral-800">
+                <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div>
+                        <span class="text-xs font-bold uppercase tracking-wider text-accent mb-1 inline-block">Virtual Pet Zone</span>
+                        <h2 id="pet-name-display" class="text-2xl font-bold">Sir Cuddlebutt 🐶</h2>
+                        <p id="pet-status-text" class="text-neutral-400 text-sm mt-1">Mood: Sleeping peacefully 😴. Feed or pet him to wake him up!</p>
+                        <div class="flex flex-wrap gap-3 mt-4">
+                            <button onclick="interactPet('pet')" class="px-4 py-2 bg-neutral-800 hover:bg-neutral-700 rounded-xl text-xs font-semibold transition">🥰 Pet Sir Cuddlebutt</button>
+                            <button onclick="interactPet('treat')" class="px-4 py-2 bg-accent hover:bg-accent-hover rounded-xl text-xs font-semibold text-white transition">🍖 Give Treat (+Score)</button>
+                            <button onclick="togglePetLocation()" id="pet-location-btn" class="px-4 py-2 bg-neutral-800 hover:bg-neutral-700 rounded-xl text-xs font-semibold transition">🌳 Toggle Outside Dog</button>
+                        </div>
+                    </div>
+                    <div class="w-48 h-48 bg-neutral-900 border border-neutral-800 rounded-2xl flex items-center justify-center text-7xl select-none relative overflow-hidden shadow-inner">
+                        <span id="pet-avatar" class="animate-bounce">🐕</span>
+                        <div id="pet-treat-fx" class="absolute bottom-2 text-xs font-bold text-pink-400 opacity-0 transition-opacity">Yummy! +10 🍖</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wheel Spinner & Popcorn Game -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="glass-panel p-6 rounded-2xl border border-neutral-800 flex flex-col justify-between">
+                    <div>
+                        <span class="text-xs font-bold uppercase tracking-wider text-accent mb-1 inline-block">Date Night Decision Maker</span>
+                        <h2 class="text-2xl font-bold mb-2">Pick For Us Wheel</h2>
+                        <p class="text-neutral-400 text-sm mb-6">Can't decide what to watch tonight? Let fate choose!</p>
+                    </div>
+                    <div class="text-center py-8 bg-neutral-900/60 rounded-xl border border-neutral-800 mb-6">
+                        <div id="wheel-result" class="text-xl md:text-2xl font-black text-white px-4">Click Spin to Choose! 🎡</div>
+                    </div>
+                    <button onclick="spinWheel()" class="w-full py-3.5 bg-accent hover:bg-accent-hover text-white font-bold rounded-xl transition text-sm">Spin the Wheel</button>
+                </div>
+
+                <div class="glass-panel p-6 rounded-2xl border border-neutral-800 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-xs font-bold uppercase tracking-wider text-accent">Mini-Game</span>
+                            <span id="popcorn-score" class="text-xs font-bold bg-neutral-900 px-3 py-1 rounded-full border border-neutral-800">Score: 0</span>
+                        </div>
+                        <h2 class="text-2xl font-bold mb-2">Popcorn Bucket Snack Challenge</h2>
+                        <p class="text-neutral-400 text-sm mb-4">Tap as many falling popcorn kernels as you can in 30 seconds!</p>
+                    </div>
+                    <div id="popcorn-game-box" class="h-44 bg-neutral-900 border border-neutral-800 rounded-xl relative overflow-hidden cursor-crosshair mb-4 flex items-center justify-center">
+                        <div id="popcorn-start-prompt" class="text-neutral-400 text-sm font-medium">Click Start Game below! 🍿</div>
+                    </div>
+                    <button id="popcorn-btn" onclick="startPopcornGame()" class="w-full py-3.5 bg-neutral-800 hover:bg-neutral-700 text-white font-bold rounded-xl transition text-sm">Start Snack Challenge</button>
+                </div>
+            </div>
+
+            <!-- Scheduler & Diary -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="glass-panel p-6 rounded-2xl border border-neutral-800">
+                    <span class="text-xs font-bold uppercase tracking-wider text-accent mb-1 inline-block">Planner</span>
+                    <h2 class="text-2xl font-bold mb-2">Movie Night Scheduler</h2>
+                    <p class="text-neutral-400 text-sm mb-6">Schedule our upcoming romantic date night.</p>
+                    <form onsubmit="saveSchedule(event)" class="space-y-4 mb-6">
+                        <input type="text" id="sched-title" required placeholder="Movie / Show Title"
+                            class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-3 text-white focus:outline-none focus:border-red-600 text-sm">
+                        <div class="grid grid-cols-2 gap-4">
+                            <input type="date" id="sched-date" required class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-3 text-white focus:outline-none focus:border-red-600 text-sm">
+                            <input type="time" id="sched-time" required class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-3 text-white focus:outline-none focus:border-red-600 text-sm">
+                        </div>
+                        <input type="text" id="sched-snack" placeholder="Snack Reminder (e.g. Caramel Popcorn & Wine 🍷)"
+                            class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-3 text-white focus:outline-none focus:border-red-600 text-sm">
+                        <button type="submit" class="w-full py-3 bg-accent hover:bg-accent-hover text-white font-bold rounded-xl transition text-sm">Schedule Date Night</button>
+                    </form>
+                    <div id="schedule-list" class="space-y-3 max-h-48 overflow-y-auto"></div>
+                </div>
+
+                <div class="glass-panel p-6 rounded-2xl border border-neutral-800 flex flex-col justify-between">
+                    <div>
+                        <span class="text-xs font-bold uppercase tracking-wider text-accent mb-1 inline-block">Memories</span>
+                        <h2 class="text-2xl font-bold mb-2">Loveflix Shared Diary</h2>
+                        <p class="text-neutral-400 text-sm mb-6">Post cute love notes, memories, and date night reviews.</p>
+                        <form onsubmit="saveDiaryNote(event)" class="space-y-4 mb-6">
+                            <textarea id="diary-text" required rows="3" placeholder="Write our memory or love note here..."
+                                class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-3 text-white focus:outline-none focus:border-red-600 text-sm resize-none"></textarea>
+                            <button type="submit" class="w-full py-3 bg-accent hover:bg-accent-hover text-white font-bold rounded-xl transition text-sm">Post to Diary</button>
+                        </form>
+                    </div>
+                    <div id="diary-list" class="space-y-3 max-h-56 overflow-y-auto"></div>
+                </div>
+            </div>
+
+            <!-- Quiz -->
+            <div class="glass-panel p-6 sm:p-8 rounded-2xl border border-neutral-800">
+                <span class="text-xs font-bold uppercase tracking-wider text-accent mb-1 inline-block">Fun Module</span>
+                <h2 class="text-2xl font-bold mb-2">Couple's Compatibility Quiz</h2>
+                <p class="text-neutral-400 text-sm mb-6">Test how well you both match on movie preferences and romantic habits!</p>
+                <div id="quiz-container">
+                    <div id="quiz-question-box" class="mb-6">
+                        <h3 id="quiz-q-title" class="text-lg font-bold mb-3">Question 1</h3>
+                        <div id="quiz-options" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+                    </div>
+                    <div id="quiz-result-box" class="hidden text-center py-6">
+                        <div class="text-4xl mb-3">💖 100% Soulmate Match! 💖</div>
+                        <p class="text-neutral-300 text-sm mb-4">You both share an unbreakable bond and identical cinematic tastes!</p>
+                        <button onclick="resetQuiz()" class="px-6 py-2.5 bg-accent hover:bg-accent-hover text-white font-bold rounded-xl text-sm transition">Retake Quiz</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB: SHARED WATCH ROOM -->
+        <section id="tab-sharedroom" class="tab-content hidden px-4 sm:px-12 pt-28 max-w-7xl mx-auto">
+            <h1 class="text-3xl font-extrabold mb-2">Shared Watch Room & Live Chat</h1>
+            <p class="text-neutral-400 text-sm mb-8">Watch together in sync across tabs and chat in real-time with instant emoji reactions.</p>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2 space-y-4">
+                    <div class="aspect-video bg-neutral-900 border border-neutral-800 rounded-2xl relative overflow-hidden flex items-center justify-center">
+                        <video id="shared-room-video" controls class="w-full h-full object-cover hidden"></video>
+                        <div id="shared-room-placeholder" class="text-center p-6">
+                            <span class="text-5xl mb-3 block">🍿</span>
+                            <h3 class="text-xl font-bold mb-2">No video currently playing in the Shared Room</h3>
+                            <p class="text-neutral-400 text-sm mb-4">Choose any movie or episode from the catalog and click "Watch in Shared Room"</p>
+                        </div>
+                    </div>
+                    <div class="glass-panel p-4 rounded-xl border border-neutral-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div>
+                            <h4 id="shared-room-title" class="font-bold text-sm">Select something to watch together</h4>
+                            <p id="shared-room-status" class="text-xs text-neutral-400">Waiting for partner...</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="openSharedQueueModal()" class="px-3.5 py-2 bg-pink-600/20 hover:bg-pink-600/40 border border-pink-500/30 text-pink-300 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5">
+                                <span>📋</span> <span>Queue Next</span>
+                            </button>
+                            <button onclick="sendEmojiReaction('❤️')" class="p-2 bg-neutral-800 hover:bg-neutral-700 rounded-xl text-lg transition">❤️</button>
+                            <button onclick="sendEmojiReaction('🍿')" class="p-2 bg-neutral-800 hover:bg-neutral-700 rounded-xl text-lg transition">🍿</button>
+                            <button onclick="sendEmojiReaction('🥰')" class="p-2 bg-neutral-800 hover:bg-neutral-700 rounded-xl text-lg transition">🥰</button>
+                            <button onclick="sendEmojiReaction('✨')" class="p-2 bg-neutral-800 hover:bg-neutral-700 rounded-xl text-lg transition">✨</button>
+                        </div>
+                    </div>
+
+                    <!-- Shared Queue Preview Bar -->
+                    <div class="glass-panel p-4 rounded-xl border border-neutral-800">
+                        <div class="flex items-center justify-between mb-3">
+                            <h5 class="text-xs font-bold uppercase tracking-wider text-pink-400 flex items-center space-x-1.5"><span>⏭️</span> <span>Next Up / Watch Queue</span></h5>
+                            <span id="shared-queue-count" class="text-[10px] text-neutral-400">0 items queued</span>
+                        </div>
+                        <div id="shared-queue-bar" class="flex space-x-3 overflow-x-auto pb-2 scrollbar-none">
+                            <span class="text-xs text-neutral-500 italic py-2">No upcoming shows queued yet. Click "Queue Next" to add movies!</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-4 rounded-2xl border border-neutral-800 flex flex-col h-[500px] lg:h-auto">
+                    <div class="border-b border-neutral-800 pb-3 mb-3 flex items-center justify-between">
+                        <h3 class="font-bold text-sm flex items-center space-x-2"><span>💬</span> <span>Live Couple's Chat</span></h3>
+                        <span class="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></span>
+                    </div>
+                    <div id="chat-messages" class="flex-1 overflow-y-auto space-y-3 pr-2 mb-3 text-sm"></div>
+                    <form onsubmit="sendChatMessage(event)" class="flex space-x-2">
+                        <input type="text" id="chat-input" required placeholder="Type a sweet message..."
+                            class="flex-1 bg-neutral-900 border border-neutral-700 rounded-xl p-3 text-white focus:outline-none focus:border-red-600 text-sm">
+                        <button type="submit" class="px-5 py-3 bg-accent hover:bg-accent-hover text-white font-bold rounded-xl transition text-sm">Send</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- SHARED QUEUE PICKER MODAL -->
+        <div id="shared-queue-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+            <div class="glass-panel p-6 sm:p-8 rounded-2xl max-w-2xl w-full shadow-2xl border border-neutral-800 max-h-[85vh] overflow-y-auto">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-bold flex items-center space-x-2"><span>📋</span> <span>Add to Shared Watch Queue</span></h3>
+                    <button onclick="closeSharedQueueModal()" class="w-8 h-8 rounded-full bg-neutral-800 hover:bg-neutral-700 flex items-center justify-center text-neutral-300 font-bold">✕</button>
+                </div>
+                <p class="text-neutral-400 text-xs mb-6">Select a movie or show from our catalog to queue up next for both of you!</p>
+                
+                <div id="shared-queue-catalog-list" class="space-y-3">
+                    <!-- Dynamically populated catalog items -->
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: CHERRY VAULT (ADMIN SUITE) -->
+        <section id="tab-vault" class="tab-content hidden px-4 sm:px-12 pt-28 max-w-7xl mx-auto space-y-12">
+            <div>
+                <span class="text-xs font-bold uppercase tracking-wider text-pink-500 mb-1 inline-block">Admin Suite</span>
+                <h1 class="text-3xl font-extrabold mb-2">🍒 Cherry Vault</h1>
+                <p class="text-neutral-400 text-sm">Upload new movies or multi-season TV series with local video & thumbnail image file objects, and manage catalog.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Movie Upload -->
+                <div class="glass-panel p-6 sm:p-8 rounded-2xl border border-neutral-800">
+                    <h2 class="text-xl font-bold mb-4 flex items-center space-x-2"><span>🎬</span> <span>Upload Movie</span></h2>
+                    <form onsubmit="handleMovieUpload(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-neutral-400 uppercase mb-1">Movie Title</label>
+                            <input type="text" id="upload-movie-title" required placeholder="e.g. Our First Date"
+                                class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-3 text-white focus:outline-none focus:border-pink-500 text-sm">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-neutral-400 uppercase mb-1">Genre</label>
+                                <input type="text" id="upload-movie-genre" required placeholder="Romance / Comedy"
+                                    class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-3 text-white focus:outline-none focus:border-pink-500 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-neutral-400 uppercase mb-1">IMDb Rating</label>
+                                <input type="text" id="upload-movie-rating" required placeholder="9.8/10"
+                                    class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-3 text-white focus:outline-none focus:border-pink-500 text-sm">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-neutral-400 uppercase mb-1">Poster Image URL or Upload Local Image File</label>
+                            <div class="space-y-2">
+                                <input type="url" id="upload-movie-poster" placeholder="https://images.unsplash.com/... (or choose file below)"
+                                    class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-3 text-white focus:outline-none focus:border-pink-500 text-sm">
+                                <input type="file" id="upload-movie-poster-file" accept="image/*" onchange="previewMoviePoster(event)"
+                                    class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-2 text-neutral-400 text-xs file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-pink-600 file:text-white hover:file:bg-pink-700 cursor-pointer">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-neutral-400 uppercase mb-1">Description</label>
+                            <textarea id="upload-movie-desc" required rows="2" placeholder="Movie synopsis..."
+                                class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-3 text-white focus:outline-none focus:border-pink-500 text-sm resize-none"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-neutral-400 uppercase mb-1">Local Video File (.mp4, etc.)</label>
+                            <input type="file" id="upload-movie-file" accept="video/*" required
+                                class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-2.5 text-neutral-400 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-pink-600 file:text-white hover:file:bg-pink-700 cursor-pointer">
+                        </div>
+                        <button type="submit" class="w-full py-3.5 bg-pink-600 hover:bg-pink-700 text-white font-bold rounded-xl transition text-sm">Upload Movie to Catalog</button>
+                    </form>
+                </div>
+
+                <!-- TV Series Upload -->
+                <div class="glass-panel p-6 sm:p-8 rounded-2xl border border-neutral-800 flex flex-col justify-between">
+                    <div>
+                        <h2 class="text-xl font-bold mb-4 flex items-center space-x-2"><span>📺</span> <span>Upload TV Series (Multi-Season)</span></h2>
+                        <form onsubmit="handleShowUpload(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-neutral-400 uppercase mb-1">Series Title</label>
+                                <input type="text" id="upload-show-title" required placeholder="e.g. Our Love Story"
+                                    class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-3 text-white focus:outline-none focus:border-pink-500 text-sm">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-neutral-400 uppercase mb-1">Genre</label>
+                                    <input type="text" id="upload-show-genre" required placeholder="Romance / Drama"
+                                        class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-3 text-white focus:outline-none focus:border-pink-500 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-neutral-400 uppercase mb-1">Rating</label>
+                                    <input type="text" id="upload-show-rating" required placeholder="10/10"
+                                        class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-3 text-white focus:outline-none focus:border-pink-500 text-sm">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-neutral-400 uppercase mb-1">Poster Image URL or Upload Local Thumbnail File</label>
+                                <div class="space-y-2">
+                                    <input type="url" id="upload-show-poster" placeholder="https://images.unsplash.com/... (or choose file below)"
+                                        class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-3 text-white focus:outline-none focus:border-pink-500 text-sm">
+                                    <input type="file" id="upload-show-poster-file" accept="image/*" onchange="previewShowPoster(event)"
+                                        class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-2 text-neutral-400 text-xs file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-pink-600 file:text-white hover:file:bg-pink-700 cursor-pointer">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-neutral-400 uppercase mb-1">Description</label>
+                                <textarea id="upload-show-desc" required rows="2" placeholder="Series synopsis..."
+                                    class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-3 text-white focus:outline-none focus:border-pink-500 text-sm resize-none"></textarea>
+                            </div>
+                            
+                            <div class="bg-neutral-900/80 p-4 rounded-xl border border-neutral-800 space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs font-bold uppercase text-neutral-300">Seasons & Episodes Builder</span>
+                                    <button type="button" onclick="addSeasonInputBuilder()" class="px-3 py-1 bg-neutral-800 hover:bg-neutral-700 text-pink-400 rounded-lg text-xs font-semibold transition">+ Add Season</button>
+                                </div>
+                                <div id="builder-seasons-container" class="space-y-4 max-h-60 overflow-y-auto pr-1"></div>
+                            </div>
+
+                            <button type="submit" class="w-full py-3.5 bg-pink-600 hover:bg-pink-700 text-white font-bold rounded-xl transition text-sm">Upload TV Series</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Catalog Management -->
+            <div class="glass-panel p-6 sm:p-8 rounded-2xl border border-neutral-800 mb-8">
+                <h2 class="text-xl font-bold mb-4">Catalog Management (Delete Items)</h2>
+                <div id="catalog-management-list" class="space-y-3 max-h-96 overflow-y-auto"></div>
+            </div>
+
+            <!-- Security PIN Management -->
+            <div class="glass-panel p-6 sm:p-8 rounded-2xl border border-neutral-800">
+                <h2 class="text-xl font-bold mb-2 flex items-center space-x-2"><span>🔒</span> <span>Change Cherry Admin PIN</span></h2>
+                <p class="text-neutral-400 text-sm mb-6">Update your 4-digit security PIN used to unlock the Cherry Admin profile.</p>
+                <form onsubmit="handlePinChange(event)" class="space-y-4 max-w-md">
+                    <div>
+                        <label class="block text-xs font-semibold text-neutral-400 uppercase mb-1">Current PIN</label>
+                        <input type="password" id="vault-current-pin" maxlength="4" required placeholder="••••"
+                            class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-3 text-white focus:outline-none focus:border-pink-500 text-sm tracking-widest">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-neutral-400 uppercase mb-1">New 4-Digit PIN</label>
+                        <input type="password" id="vault-new-pin" maxlength="4" required placeholder="••••"
+                            class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-3 text-white focus:outline-none focus:border-pink-500 text-sm tracking-widest">
+                    </div>
+                    <div id="vault-pin-error" class="text-red-500 text-xs hidden">Current PIN is incorrect. (Default is 1234)</div>
+                    <button type="submit" class="w-full py-3.5 bg-pink-600 hover:bg-pink-700 text-white font-bold rounded-xl transition text-sm">Update PIN</button>
+                </form>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- STREAMING MODALS -->
+    <div id="movie-player-modal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 hidden">
+        <div class="max-w-4xl w-full glass-panel rounded-2xl overflow-hidden border border-neutral-800 flex flex-col shadow-2xl">
+            <div class="p-4 bg-neutral-900 flex items-center justify-between border-b border-neutral-800">
+                <div class="flex items-center space-x-3">
+                    <button onclick="closeMoviePlayer()" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-bold transition">
+                        <span>←</span> <span>Exit Player</span>
+                    </button>
+                    <h3 id="player-movie-title" class="font-bold text-lg truncate">Movie Title</h3>
+                </div>
+                <button onclick="closeMoviePlayer()" class="w-8 h-8 rounded-full bg-neutral-800 hover:bg-neutral-700 flex items-center justify-center text-neutral-300 hover:text-white font-bold">✕</button>
+            </div>
+            <div class="aspect-video bg-black flex items-center justify-center relative overflow-hidden">
+                <video id="player-movie-video" controls class="w-full h-full object-contain block z-10"></video>
+                <div id="player-movie-fallback" class="absolute inset-0 flex flex-col items-center justify-center text-neutral-400 text-xs p-4 text-center hidden">
+                    <span>⚠️ If the local video fails to decode, try sample video or use standard .mp4 format.</span>
+                </div>
+            </div>
+            <div class="p-6 bg-neutral-950 space-y-3">
+                <div class="flex items-center space-x-3">
+                    <span id="player-movie-rating" class="px-2.5 py-1 bg-green-600/20 text-green-400 rounded-md text-xs font-bold">9.8/10</span>
+                    <span id="player-movie-genre" class="text-xs text-neutral-400 font-semibold uppercase tracking-wider">Romance</span>
+                </div>
+                <p id="player-movie-desc" class="text-neutral-300 text-sm">Movie description...</p>
+                <div class="pt-2 flex justify-end">
+                    <button onclick="watchInSharedRoomFromPlayer()" class="px-6 py-2.5 bg-accent hover:bg-accent-hover text-white rounded-xl text-xs font-bold transition flex items-center space-x-2">
+                        <span>🍿</span> <span>Watch in Shared Room</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="series-hub-modal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 hidden">
+        <div class="max-w-5xl w-full glass-panel rounded-2xl overflow-hidden border border-neutral-800 flex flex-col md:flex-row h-[85vh] shadow-2xl">
+            <div class="md:w-1/3 p-6 bg-neutral-950 flex flex-col justify-between border-r border-neutral-800">
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <button onclick="closeSeriesModal()" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-neutral-200 text-xs font-bold transition border border-neutral-800">
+                            <span>←</span> <span>Exit Series</span>
+                        </button>
+                        <button onclick="closeSeriesModal()" class="w-7 h-7 rounded-full bg-neutral-900 hover:bg-neutral-800 flex items-center justify-center text-neutral-400 hover:text-white text-xs font-bold">✕</button>
+                    </div>
+                    <img id="series-poster" src="" alt="Poster" class="w-full h-56 object-cover rounded-xl mb-4 border border-neutral-800">
+                    <h3 id="series-title" class="text-2xl font-bold mb-2">Series Title</h3>
+                    <div class="flex items-center space-x-2 mb-3">
+                        <span id="series-rating" class="px-2 py-0.5 bg-green-600/20 text-green-400 rounded text-xs font-bold">10/10</span>
+                        <span id="series-genre" class="text-xs text-neutral-400 uppercase font-semibold">Romance</span>
+                    </div>
+                    <p id="series-desc" class="text-neutral-300 text-xs leading-relaxed">Series description...</p>
+                </div>
+                <div class="pt-4 border-t border-neutral-800">
+                    <button onclick="watchSeriesInSharedRoom()" class="w-full py-3 bg-accent hover:bg-accent-hover text-white rounded-xl text-xs font-bold transition flex items-center justify-center space-x-2">
+                        <span>🍿</span> <span>Watch Episode in Shared Room</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="md:w-2/3 flex flex-col bg-neutral-900/50">
+                <div class="p-6 border-b border-neutral-800 flex items-center justify-between">
+                    <h4 class="font-bold text-lg">Seasons & Episodes</h4>
+                    <div id="season-tabs" class="flex space-x-2 overflow-x-auto"></div>
+                </div>
+                <div class="flex-1 p-6 overflow-y-auto space-y-4">
+                    <div class="aspect-video bg-black rounded-xl overflow-hidden mb-4 border border-neutral-800 relative">
+                        <video id="series-player-video" controls class="w-full h-full object-contain hidden"></video>
+                        <div id="series-player-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-neutral-400 text-xs">
+                            <span>📺 Select an episode from below to play</span>
+                        </div>
+                    </div>
+                    <h5 id="current-playing-ep-title" class="font-bold text-sm text-neutral-300">Select an episode</h5>
+                    <div id="episodes-list" class="space-y-3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- JAVASCRIPT APPLICATION CODE -->
+    <script>
+        let defaultMovies = [
+            {
+                id: 'm1',
+                title: 'Midnight in Paris with You',
+                genre: 'Romance / Drama',
+                rating: '9.9/10',
+                poster: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1200&q=80',
+                desc: 'A magical night stroll along the Seine River under the glowing city lights.',
+                videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
+            },
+            {
+                id: 'm2',
+                title: 'Starlight Romance',
+                genre: 'Comedy / Romance',
+                rating: '9.7/10',
+                poster: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80',
+                desc: 'Two stargazers find each other against all odds during a meteor shower.',
+                videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4'
+            },
+            {
+                id: 'm3',
+                title: 'Coffee & Cuddles',
+                genre: 'Slice of Life',
+                rating: '9.8/10',
+                poster: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1200&q=80',
+                desc: 'A cozy Sunday morning routine filled with warm coffee, good music, and endless cuddles.',
+                videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4'
+            }
+        ];
+
+        let defaultShows = [
+            {
+                id: 's1',
+                title: 'Our Love Story Chronicles',
+                genre: 'Reality / Romance',
+                rating: '10/10',
+                poster: 'https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=1200&q=80',
+                desc: 'Documenting every magical chapter of our journey together.',
+                seasons: [
+                    {
+                        seasonNum: 1,
+                        episodes: [
+                            { epNum: 1, title: 'Episode 1: The First Hello', videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4' },
+                            { epNum: 2, title: 'Episode 2: Coffee Date & Butterflies', videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4' }
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        let defaultProfiles = [
+            { id: 'diyaa', name: 'Diyaa ❤️', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Diyaa', pinProtected: false },
+            { id: 'cherry', name: 'Cherry Admin 🍒', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=CherryAdmin', pinProtected: true },
+            { id: 'shared', name: 'Shared Room 👩‍❤️‍👨', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=SharedRoom', pinProtected: false }
+        ];
+
+        let state = {
+            currentProfile: null,
+            theme: localStorage.getItem('loveflix_theme') || 'netflix',
+            movies: JSON.parse(localStorage.getItem('loveflix_movies')) || defaultMovies,
+            shows: JSON.parse(localStorage.getItem('loveflix_shows')) || defaultShows,
+            profiles: JSON.parse(localStorage.getItem('loveflix_profiles')) || defaultProfiles,
+            cherryPin: localStorage.getItem('loveflix_cherry_pin') || '1234',
+            sharedQueue: JSON.parse(localStorage.getItem('loveflix_shared_queue')) || [],
+            schedules: JSON.parse(localStorage.getItem('loveflix_schedules')) || [
+                { id: 1, title: 'Starlight Romance Movie Night', date: '2026-03-15', time: '20:00', snack: 'Caramel Popcorn & Hot Cocoa 🍷' }
+            ],
+            diary: JSON.parse(localStorage.getItem('loveflix_diary')) || [
+                { id: 1, text: 'We watched Midnight in Paris and cuddled on the sofa all evening! 💖', date: 'March 10, 2026' }
+            ],
+            heroIndex: 0,
+            heroTimer: null,
+            currentPlayingMovie: null,
+            currentPlayingSeries: null,
+            currentSeasonIndex: 0,
+            currentEpisodeIndex: 0,
+            pet: { name: 'Sir Cuddlebutt', mood: 'Sleeping peacefully 😴', avatar: '🐕', isOutside: false, score: 0 },
+            quiz: { currentQ: 0 }
+        };
+
+        window.onload = function() {
+            setTheme(state.theme);
+            initProfiles();
+            
+            setTimeout(() => {
+                const intro = document.getElementById('cinematic-intro');
+                if (intro) {
+                    intro.style.opacity = '0';
+                    setTimeout(() => {
+                        intro.style.display = 'none';
+                        checkActiveProfile();
+                    }, 1000);
+                } else {
+                    checkActiveProfile();
+                }
+            }, 3800);
+
+            window.addEventListener('storage', (e) => {
+                if (e.key === 'loveflix_chat_messages') renderChatMessages();
+                if (e.key === 'loveflix_shared_room_state') syncSharedRoomState();
+                if (e.key === 'loveflix_shared_queue') {
+                    state.sharedQueue = JSON.parse(localStorage.getItem('loveflix_shared_queue')) || [];
+                    renderSharedQueueBar();
+                }
+            });
+
+            renderAllCatalogs();
+            startHeroCarousel();
+            renderSchedules();
+            renderDiary();
+            renderCatalogManagement();
+            initQuiz();
+            initBuilderSeasons();
+            renderChatMessages();
+            renderSharedQueueBar();
+        };
+
+        /* --- THEME CUSTOMIZER --- */
+        function setTheme(themeName) {
+            state.theme = themeName;
+            localStorage.setItem('loveflix_theme', themeName);
+            document.body.className = `theme-${themeName} min-h-screen flex flex-col selection:bg-red-600 selection:text-white`;
+        }
+        function openThemeModal() { document.getElementById('theme-modal').classList.remove('hidden'); }
+        function closeThemeModal() { document.getElementById('theme-modal').classList.add('hidden'); }
+
+        /* --- PROFILES & GATE --- */
+        function initProfiles() {
+            const grid = document.getElementById('profiles-grid');
+            grid.innerHTML = '';
+            state.profiles.forEach(p => {
+                const card = document.createElement('div');
+                card.className = 'flex flex-col items-center cursor-pointer group p-3 rounded-2xl hover:bg-neutral-900 transition';
+                card.onclick = () => selectProfile(p);
+                card.innerHTML = `
+                    <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden border-2 border-transparent group-hover:border-white shadow-lg transition mb-3 relative">
+                        <img src="${p.avatar}" alt="${p.name}" class="w-full h-full object-cover">
+                        ${p.pinProtected ? '<div class="absolute top-2 right-2 bg-black/70 p-1 rounded-full text-xs">🔒</div>' : ''}
+                    </div>
+                    <span class="text-sm font-semibold text-neutral-300 group-hover:text-white">${p.name}</span>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        let pendingProfile = null;
+        function selectProfile(profile) {
+            if (profile.pinProtected) {
+                pendingProfile = profile;
+                document.getElementById('pin-modal').classList.remove('hidden');
+                document.getElementById('pin-input').value = '';
+                document.getElementById('pin-error').classList.add('hidden');
+                setTimeout(() => document.getElementById('pin-input').focus(), 100);
+            } else {
+                loginAsProfile(profile);
+            }
+        }
+
+        function verifyPin(e) {
+            e.preventDefault();
+            const val = document.getElementById('pin-input').value;
+            const correctPin = state.cherryPin || '1234';
+            if (val === correctPin) {
+                closePinModal();
+                loginAsProfile(pendingProfile);
+            } else {
+                document.getElementById('pin-error').classList.remove('hidden');
+            }
+        }
+        function closePinModal() { document.getElementById('pin-modal').classList.add('hidden'); }
+
+        function handlePinChange(e) {
+            e.preventDefault();
+            const currentVal = document.getElementById('vault-current-pin').value;
+            const newVal = document.getElementById('vault-new-pin').value;
+            const errEl = document.getElementById('vault-pin-error');
+            const activePin = state.cherryPin || '1234';
+
+            if (currentVal !== activePin) {
+                errEl.classList.remove('hidden');
+                return;
+            }
+            if (newVal.length !== 4 || isNaN(newVal)) {
+                errEl.innerText = 'New PIN must be exactly 4 digits.';
+                errEl.classList.remove('hidden');
+                return;
+            }
+
+            errEl.classList.add('hidden');
+            state.cherryPin = newVal;
+            localStorage.setItem('loveflix_cherry_pin', newVal);
+            e.target.reset();
+            alertMessage('Cherry Admin PIN updated successfully! 🔒💖');
+        }
+
+        function loginAsProfile(profile) {
+            state.currentProfile = profile;
+            localStorage.setItem('loveflix_active_profile', JSON.stringify(profile));
+            document.getElementById('profile-gate').classList.add('hidden');
+            document.getElementById('current-profile-name').innerText = profile.name;
+            document.getElementById('current-profile-avatar').src = profile.avatar;
+
+            const isCherry = profile.id === 'cherry' || profile.name.toLowerCase().includes('cherry');
+            if (isCherry) {
+                document.getElementById('nav-cherry-vault').classList.remove('hidden');
+                document.getElementById('mobile-nav-vault').classList.remove('hidden');
+            } else {
+                document.getElementById('nav-cherry-vault').classList.add('hidden');
+                document.getElementById('mobile-nav-vault').classList.add('hidden');
+            }
+        }
+
+        function checkActiveProfile() {
+            const saved = localStorage.getItem('loveflix_active_profile');
+            if (saved) {
+                loginAsProfile(JSON.parse(saved));
+            } else {
+                document.getElementById('profile-gate').classList.remove('hidden');
+            }
+        }
+
+        function switchProfilePrompt() {
+            localStorage.removeItem('loveflix_active_profile');
+            document.getElementById('profile-gate').classList.remove('hidden');
+            initProfiles();
+        }
+
+        function openProfileManagerModal() {
+            renderProfilesManagementList();
+            populateVaultAvatarSelect();
+            document.getElementById('profile-manager-modal').classList.remove('hidden');
+        }
+        function closeProfileManagerModal() { document.getElementById('profile-manager-modal').classList.add('hidden'); }
+
+        function populateVaultAvatarSelect() {
+            const select = document.getElementById('manage-profile-vault-select');
+            select.innerHTML = '<option value="">-- Choose from Vault / Movies / Shows --</option>';
+            
+            const allItems = [...state.movies, ...state.shows];
+            allItems.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item.poster;
+                opt.innerText = `${item.title} (${item.genre || 'Media'})`;
+                select.appendChild(opt);
+            });
+        }
+
+        function selectVaultAvatar(url) {
+            if (url) {
+                document.getElementById('manage-profile-avatar').value = url;
+            }
+        }
+
+        function handleProfileLocalFile(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const objectUrl = URL.createObjectURL(file);
+                document.getElementById('manage-profile-avatar').value = objectUrl;
+            }
+        }
+
+        function renderProfilesManagementList() {
+            const list = document.getElementById('profiles-manage-list');
+            list.innerHTML = '';
+            state.profiles.forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'p-3 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-between';
+                item.innerHTML = `
+                    <div class="flex items-center space-x-3 cursor-pointer" onclick="editProfilePrompt('${p.id}')">
+                        <img src="${p.avatar}" class="w-10 h-10 rounded-full object-cover">
+                        <div>
+                            <span class="font-bold text-sm text-white">${p.name}</span>
+                            <span class="text-[10px] text-neutral-400 block">${p.pinProtected ? 'PIN Protected' : 'Standard Profile'}</span>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="editProfilePrompt('${p.id}')" class="px-3 py-1 bg-neutral-800 hover:bg-neutral-700 text-xs rounded-lg text-white">Edit</button>
+                        ${state.profiles.length > 1 ? `<button onclick="deleteProfile('${p.id}')" class="px-3 py-1 bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white text-xs rounded-lg">Delete</button>` : ''}
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function editProfilePrompt(id) {
+            const p = state.profiles.find(x => x.id === id);
+            if (!p) return;
+            document.getElementById('edit-profile-id').value = p.id;
+            document.getElementById('manage-profile-name').value = p.name;
+            document.getElementById('manage-profile-avatar').value = p.avatar;
+            document.getElementById('manage-profile-pin').checked = p.pinProtected;
+        }
+
+        function handleSaveProfile(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit-profile-id').value;
+            const name = document.getElementById('manage-profile-name').value;
+            let avatar = document.getElementById('manage-profile-avatar').value;
+            const pinProtected = document.getElementById('manage-profile-pin').checked;
+
+            if (!avatar) {
+                avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`;
+            }
+
+            if (id) {
+                // Update existing profile
+                state.profiles = state.profiles.map(p => p.id === id ? { ...p, name, avatar, pinProtected } : p);
+            } else {
+                // Add new profile
+                const newProf = { id: 'p_' + Date.now(), name, avatar, pinProtected };
+                state.profiles.push(newProf);
+            }
+
+            localStorage.setItem('loveflix_profiles', JSON.stringify(state.profiles));
+            if (state.currentProfile && state.currentProfile.id === id) {
+                loginAsProfile(state.profiles.find(p => p.id === id));
+            }
+            initProfiles();
+            renderProfilesManagementList();
+            document.getElementById('edit-profile-id').value = '';
+            e.target.reset();
+            alertMessage('Profile saved successfully! 💖');
+        }
+
+        function deleteProfile(id) {
+            state.profiles = state.profiles.filter(p => p.id !== id);
+            localStorage.setItem('loveflix_profiles', JSON.stringify(state.profiles));
+            initProfiles();
+            renderProfilesManagementList();
+        }
+
+        /* --- NAVIGATION TABS --- */
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        /* --- DYNAMIC HERO BANNER CAROUSEL --- */
+        function startHeroCarousel() {
+            if (state.heroTimer) clearInterval(state.heroTimer);
+            updateHeroSlide();
+            state.heroTimer = setInterval(() => {
+                nextHeroSlide();
+            }, 7000);
+        }
+
+        function getHeroItems() {
+            return [...state.movies, ...state.shows];
+        }
+
+        function updateHeroSlide() {
+            const items = getHeroItems();
+            if (items.length === 0) return;
+            if (state.heroIndex >= items.length) state.heroIndex = 0;
+            if (state.heroIndex < 0) state.heroIndex = items.length - 1;
+
+            const item = items[state.heroIndex];
+            const carousel = document.getElementById('hero-carousel');
+            if (!carousel) return;
+
+            carousel.style.backgroundImage = `url('${item.poster}')`;
+            document.getElementById('hero-title').innerText = item.title;
+            document.getElementById('hero-desc').innerText = item.desc;
+            document.getElementById('hero-genre').innerText = item.genre;
+            document.getElementById('hero-slide-indicator').innerText = `${state.heroIndex + 1} / ${Math.min(items.length, 5)}`;
+
+            const playBtn = document.getElementById('hero-play-btn');
+            const infoBtn = document.getElementById('hero-info-btn');
+
+            if (item.seasons) {
+                playBtn.onclick = () => openSeriesModal(item);
+                infoBtn.onclick = () => openSeriesModal(item);
+            } else {
+                playBtn.onclick = () => openMoviePlayer(item);
+                infoBtn.onclick = () => openMoviePlayer(item);
+            }
+        }
+
+        function nextHeroSlide() {
+            const items = getHeroItems();
+            if (items.length === 0) return;
+            state.heroIndex = (state.heroIndex + 1) % Math.min(items.length, 5);
+            updateHeroSlide();
+        }
+
+        function prevHeroSlide() {
+            const items = getHeroItems();
+            if (items.length === 0) return;
+            state.heroIndex = (state.heroIndex - 1 + Math.min(items.length, 5)) % Math.min(items.length, 5);
+            updateHeroSlide();
+        }
+
+        /* --- CATALOG RENDERING --- */
+        function renderAllCatalogs() {
+            renderMoviesGrid();
+            renderShowsGrid();
+            renderHomeRows();
+        }
+
+        function renderMoviesGrid() {
+            const grid = document.getElementById('movies-grid');
+            grid.innerHTML = '';
+            state.movies.forEach(m => {
+                const card = document.createElement('div');
+                card.className = 'glass-panel rounded-xl overflow-hidden group cursor-pointer border border-neutral-800 hover:border-red-600 transition flex flex-col';
+                card.onclick = () => openMoviePlayer(m);
+                card.innerHTML = `
+                    <div class="aspect-[2/3] relative overflow-hidden bg-neutral-900">
+                        <img src="${m.poster}" alt="${m.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                            <span class="w-12 h-12 rounded-full bg-red-600 flex items-center justify-center text-white text-lg font-bold shadow-lg">▶</span>
+                        </div>
+                    </div>
+                    <div class="p-4 flex-1 flex flex-col justify-between">
+                        <div>
+                            <h3 class="font-bold text-sm mb-1 truncate">${m.title}</h3>
+                            <p class="text-xs text-neutral-400 mb-2">${m.genre}</p>
+                        </div>
+                        <span class="text-[10px] font-bold text-green-400 bg-green-600/10 px-2 py-0.5 rounded w-max">IMDb ${m.rating}</span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function renderShowsGrid() {
+            const grid = document.getElementById('shows-grid');
+            grid.innerHTML = '';
+            state.shows.forEach(s => {
+                const card = document.createElement('div');
+                card.className = 'glass-panel rounded-xl overflow-hidden group cursor-pointer border border-neutral-800 hover:border-red-600 transition flex flex-col';
+                card.onclick = () => openSeriesModal(s);
+                card.innerHTML = `
+                    <div class="aspect-[2/3] relative overflow-hidden bg-neutral-900">
+                        <img src="${s.poster}" alt="${s.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                        <div class="absolute top-2 right-2 bg-black/70 px-2 py-0.5 rounded text-[10px] font-bold text-pink-400">SERIES</div>
+                    </div>
+                    <div class="p-4 flex-1 flex flex-col justify-between">
+                        <div>
+                            <h3 class="font-bold text-sm mb-1 truncate">${s.title}</h3>
+                            <p class="text-xs text-neutral-400 mb-2">${s.genre}</p>
+                        </div>
+                        <span class="text-[10px] font-bold text-green-400 bg-green-600/10 px-2 py-0.5 rounded w-max">${s.seasons.length} Seasons</span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function renderHomeRows() {
+            const recRow = document.getElementById('row-recommended');
+            recRow.innerHTML = '';
+            state.movies.forEach(m => {
+                recRow.appendChild(createHorizontalCard(m, () => openMoviePlayer(m)));
+            });
+
+            const favRow = document.getElementById('row-favorites');
+            favRow.innerHTML = '';
+            [...state.movies].reverse().forEach(m => {
+                favRow.appendChild(createHorizontalCard(m, () => openMoviePlayer(m)));
+            });
+
+            const showsRow = document.getElementById('row-shows');
+            showsRow.innerHTML = '';
+            state.shows.forEach(s => {
+                showsRow.appendChild(createHorizontalCard(s, () => openSeriesModal(s)));
+            });
+        }
+
+        function createHorizontalCard(item, onClickFn) {
+            const div = document.createElement('div');
+            div.className = 'flex-shrink-0 w-52 glass-panel rounded-xl overflow-hidden group cursor-pointer border border-neutral-800 hover:border-white transition transform hover:-translate-y-1';
+            div.onclick = onClickFn;
+            div.innerHTML = `
+                <div class="aspect-[16/9] relative bg-neutral-900 overflow-hidden">
+                    <img src="${item.poster}" alt="${item.title}" class="w-full h-full object-cover group-hover:scale-105 transition">
+                </div>
+                <div class="p-3">
+                    <h4 class="font-bold text-xs truncate mb-1">${item.title}</h4>
+                    <p class="text-[10px] text-neutral-400">${item.genre}</p>
+                </div>
+            `;
+            return div;
+        }
+
+        /* --- STREAMING & PLAYERS --- */
+        function openMoviePlayer(movie) {
+            state.currentPlayingMovie = movie;
+            document.getElementById('player-movie-title').innerText = movie.title;
+            document.getElementById('player-movie-rating').innerText = movie.rating;
+            document.getElementById('player-movie-genre').innerText = movie.genre;
+            document.getElementById('player-movie-desc').innerText = movie.desc;
+            
+            const vid = document.getElementById('player-movie-video');
+            const fallback = document.getElementById('player-movie-fallback');
+            vid.classList.remove('hidden');
+            fallback.classList.add('hidden');
+            
+            vid.src = movie.videoUrl;
+            vid.load();
+            vid.play().catch(err => {
+                console.warn('Autoplay prevented or video codec issue:', err);
+                fallback.classList.remove('hidden');
+            });
+            document.getElementById('movie-player-modal').classList.remove('hidden');
+        }
+        function closeMoviePlayer() {
+            const vid = document.getElementById('player-movie-video');
+            vid.pause();
+            vid.src = '';
+            document.getElementById('movie-player-modal').classList.add('hidden');
+        }
+        function watchInSharedRoomFromPlayer() {
+            if (state.currentPlayingMovie) {
+                closeMoviePlayer();
+                setupSharedRoomVideo(state.currentPlayingMovie.title, state.currentPlayingMovie.videoUrl);
+                switchTab('sharedroom');
+            }
+        }
+
+        function openSeriesModal(show) {
+            state.currentPlayingSeries = show;
+            state.currentSeasonIndex = 0;
+            state.currentEpisodeIndex = 0;
+
+            document.getElementById('series-title').innerText = show.title;
+            document.getElementById('series-rating').innerText = show.rating;
+            document.getElementById('series-genre').innerText = show.genre;
+            document.getElementById('series-desc').innerText = show.desc;
+            document.getElementById('series-poster').src = show.poster;
+
+            renderSeasonTabs();
+            renderEpisodesList();
+            document.getElementById('series-hub-modal').classList.remove('hidden');
+        }
+
+        function closeSeriesModal() {
+            const vid = document.getElementById('series-player-video');
+            vid.pause();
+            vid.src = '';
+            document.getElementById('series-hub-modal').classList.add('hidden');
+        }
+
+        function renderSeasonTabs() {
+            const container = document.getElementById('season-tabs');
+            container.innerHTML = '';
+            state.currentPlayingSeries.seasons.forEach((season, idx) => {
+                const btn = document.createElement('button');
+                btn.className = `px-3 py-1.5 rounded-lg text-xs font-bold transition ${idx === state.currentSeasonIndex ? 'bg-red-600 text-white' : 'bg-neutral-800 text-neutral-300 hover:bg-neutral-700'}`;
+                btn.innerText = `Season ${season.seasonNum}`;
+                btn.onclick = () => {
+                    state.currentSeasonIndex = idx;
+                    renderSeasonTabs();
+                    renderEpisodesList();
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        function renderEpisodesList() {
+            const list = document.getElementById('episodes-list');
+            list.innerHTML = '';
+            const season = state.currentPlayingSeries.seasons[state.currentSeasonIndex];
+            season.episodes.forEach((ep, idx) => {
+                const item = document.createElement('div');
+                item.className = `p-3 rounded-xl border transition cursor-pointer flex items-center justify-between ${idx === state.currentEpisodeIndex ? 'bg-neutral-800 border-red-600' : 'bg-neutral-900 border-neutral-800 hover:bg-neutral-800/60'}`;
+                item.onclick = () => playEpisode(idx);
+                item.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <span class="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center text-xs font-bold">▶</span>
+                        <div>
+                            <h6 class="font-bold text-xs">${ep.title}</h6>
+                            <p class="text-[10px] text-neutral-400">Season ${season.seasonNum} • Episode ${ep.epNum}</p>
+                        </div>
+                    </div>
+                    <span class="text-xs text-neutral-400">Play</span>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function playEpisode(epIndex) {
+            state.currentEpisodeIndex = epIndex;
+            const season = state.currentPlayingSeries.seasons[state.currentSeasonIndex];
+            const ep = season.episodes[epIndex];
+
+            document.getElementById('current-playing-ep-title').innerText = `Now Playing: ${ep.title}`;
+            const vid = document.getElementById('series-player-video');
+            vid.src = ep.videoUrl;
+            vid.classList.remove('hidden');
+            document.getElementById('series-player-placeholder').classList.add('hidden');
+            vid.load();
+            vid.play().catch(err => console.warn('Episode play error:', err));
+            renderEpisodesList();
+        }
+
+        function watchSeriesInSharedRoom() {
+            const season = state.currentPlayingSeries.seasons[state.currentSeasonIndex];
+            const ep = season.episodes[state.currentEpisodeIndex];
+            if (ep) {
+                closeSeriesModal();
+                setupSharedRoomVideo(`${state.currentPlayingSeries.title} - ${ep.title}`, ep.videoUrl);
+                switchTab('sharedroom');
+            }
+        }
+
+        /* --- SHARED WATCH ROOM & LIVE CHAT --- */
+        function setupSharedRoomVideo(title, url) {
+            document.getElementById('shared-room-title').innerText = title;
+            document.getElementById('shared-room-status').innerText = 'Synced & Ready';
+            const vid = document.getElementById('shared-room-video');
+            vid.src = url;
+            vid.classList.remove('hidden');
+            document.getElementById('shared-room-placeholder').classList.add('hidden');
+            vid.load();
+            localStorage.setItem('loveflix_shared_room_state', JSON.stringify({ title, url, time: Date.now() }));
+        }
+
+        function openSharedQueueModal() {
+            const list = document.getElementById('shared-queue-catalog-list');
+            list.innerHTML = '';
+            
+            const allMedia = [
+                ...state.movies.map(m => ({ ...m, type: 'Movie' })),
+                ...state.shows.map(s => ({ ...s, type: 'TV Series' }))
+            ];
+
+            allMedia.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'p-3 rounded-xl bg-neutral-900 border border-neutral-800 hover:border-pink-500 transition flex items-center justify-between cursor-pointer';
+                div.onclick = () => addToSharedQueue(item);
+                div.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <img src="${item.poster}" class="w-12 h-12 rounded-lg object-cover">
+                        <div>
+                            <h5 class="font-bold text-sm text-white">${item.title}</h5>
+                            <p class="text-[10px] text-neutral-400">${item.genre} • <span class="text-pink-400 font-semibold">${item.type}</span></p>
+                        </div>
+                    </div>
+                    <span class="px-3 py-1.5 bg-pink-600 hover:bg-pink-700 text-white rounded-lg text-xs font-bold">Queue +</span>
+                `;
+                list.appendChild(div);
+            });
+
+            document.getElementById('shared-queue-modal').classList.remove('hidden');
+        }
+
+        function closeSharedQueueModal() {
+            document.getElementById('shared-queue-modal').classList.add('hidden');
+        }
+
+        function addToSharedQueue(item) {
+            const queueItem = {
+                id: 'q_' + Date.now() + Math.random(),
+                title: item.title,
+                genre: item.genre,
+                poster: item.poster,
+                videoUrl: item.videoUrl || (item.seasons && item.seasons[0] && item.seasons[0].episodes[0] ? item.seasons[0].episodes[0].videoUrl : 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4')
+            };
+
+            state.sharedQueue.push(queueItem);
+            localStorage.setItem('loveflix_shared_queue', JSON.stringify(state.sharedQueue));
+            renderSharedQueueBar();
+            closeSharedQueueModal();
+            alertMessage(`Queued "${item.title}" to Shared Watch Room! 🍿✨`);
+        }
+
+        function renderSharedQueueBar() {
+            const bar = document.getElementById('shared-queue-bar');
+            const countEl = document.getElementById('shared-queue-count');
+            if (!bar) return;
+
+            countEl.innerText = `${state.sharedQueue.length} items queued`;
+            if (state.sharedQueue.length === 0) {
+                bar.innerHTML = '<span class="text-xs text-neutral-500 italic py-2">No upcoming shows queued yet. Click "Queue Next" to add movies!</span>';
+                return;
+            }
+
+            bar.innerHTML = '';
+            state.sharedQueue.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = 'flex-shrink-0 w-44 glass-panel rounded-xl overflow-hidden border border-neutral-800 hover:border-white transition group relative';
+                card.innerHTML = `
+                    <div class="aspect-[16/9] relative bg-neutral-950 overflow-hidden cursor-pointer" onclick="playQueuedItem(${index})">
+                        <img src="${item.poster}" class="w-full h-full object-cover group-hover:scale-105 transition">
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                            <span class="text-white text-xs font-bold bg-red-600 px-2 py-1 rounded">Play Now</span>
+                        </div>
+                    </div>
+                    <div class="p-2.5 flex items-center justify-between">
+                        <span class="font-bold text-xs truncate">${item.title}</span>
+                        <button onclick="removeFromQueue('${item.id}')" class="text-neutral-500 hover:text-red-400 text-xs px-1">✕</button>
+                    </div>
+                `;
+                bar.appendChild(card);
+            });
+        }
+
+        function playQueuedItem(index) {
+            const item = state.sharedQueue[index];
+            if (item) {
+                setupSharedRoomVideo(item.title, item.videoUrl);
+                // Optionally remove from queue after playing
+                state.sharedQueue.splice(index, 1);
+                localStorage.setItem('loveflix_shared_queue', JSON.stringify(state.sharedQueue));
+                renderSharedQueueBar();
+            }
+        }
+
+        function removeFromQueue(id) {
+            state.sharedQueue = state.sharedQueue.filter(q => q.id !== id);
+            localStorage.setItem('loveflix_shared_queue', JSON.stringify(state.sharedQueue));
+            renderSharedQueueBar();
+        }
+
+        function syncSharedRoomState() {
+            const data = JSON.parse(localStorage.getItem('loveflix_shared_room_state'));
+            if (data) {
+                document.getElementById('shared-room-title').innerText = data.title;
+                document.getElementById('shared-room-status').innerText = 'Synced from Partner';
+                const vid = document.getElementById('shared-room-video');
+                if (vid.src !== data.url) {
+                    vid.src = data.url;
+                    vid.classList.remove('hidden');
+                    document.getElementById('shared-room-placeholder').classList.add('hidden');
+                }
+            }
+        }
+
+        function sendChatMessage(e) {
+            e.preventDefault();
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const profileName = state.currentProfile ? state.currentProfile.name : 'Diyaa ❤️';
+            const msg = { sender: profileName, text, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+
+            let messages = JSON.parse(localStorage.getItem('loveflix_chat_messages')) || [];
+            messages.push(msg);
+            localStorage.setItem('loveflix_chat_messages', JSON.stringify(messages));
+            input.value = '';
+            renderChatMessages();
+        }
+
+        function sendEmojiReaction(emoji) {
+            const profileName = state.currentProfile ? state.currentProfile.name : 'Diyaa ❤️';
+            const msg = { sender: profileName, text: `Sent reaction: ${emoji}`, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+
+            let messages = JSON.parse(localStorage.getItem('loveflix_chat_messages')) || [];
+            messages.push(msg);
+            localStorage.setItem('loveflix_chat_messages', JSON.stringify(messages));
+            renderChatMessages();
+        }
+
+        function renderChatMessages() {
+            const container = document.getElementById('chat-messages');
+            if (!container) return;
+            const messages = JSON.parse(localStorage.getItem('loveflix_chat_messages')) || [
+                { sender: 'Cherry Admin 🍒', text: 'Welcome to our Shared Watch Room! ❤️', time: '12:00 PM' }
+            ];
+            container.innerHTML = '';
+            messages.forEach(m => {
+                const div = document.createElement('div');
+                div.className = 'p-2.5 rounded-xl bg-neutral-900/80 border border-neutral-800 text-xs';
+                div.innerHTML = `
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-bold text-pink-400">${m.sender}</span>
+                        <span class="text-[10px] text-neutral-500">${m.time}</span>
+                    </div>
+                    <p class="text-neutral-200">${m.text}</p>
+                `;
+                container.appendChild(div);
+            });
+            container.scrollTop = container.scrollHeight;
+        }
+
+        /* --- COUPLE HUB MODULES --- */
+        function interactPet(action) {
+            const petEl = document.getElementById('pet-avatar');
+            const statusEl = document.getElementById('pet-status-text');
+            const fxEl = document.getElementById('pet-treat-fx');
+
+            if (action === 'pet') {
+                petEl.innerText = '🐈';
+                statusEl.innerText = 'Mood: Purring and super happy with cuddles! 🥰';
+                setTimeout(() => petEl.innerText = state.pet.isOutside ? '🐕🌳' : '🐕', 2500);
+            } else if (action === 'treat') {
+                state.pet.score += 10;
+                petEl.innerText = '🍖🐕';
+                statusEl.innerText = `Mood: Munching happily! Treat Score: ${state.pet.score} 🍖`;
+                fxEl.style.opacity = '1';
+                setTimeout(() => {
+                    fxEl.style.opacity = '0';
+                    petEl.innerText = state.pet.isOutside ? '🐕🌳' : '🐕';
+                }, 1500);
+            }
+        }
+
+        function togglePetLocation() {
+            state.pet.isOutside = !state.pet.isOutside;
+            const btn = document.getElementById('pet-location-btn');
+            const statusEl = document.getElementById('pet-status-text');
+            const petEl = document.getElementById('pet-avatar');
+
+            if (state.pet.isOutside) {
+                btn.innerText = '🏠 Bring Inside';
+                statusEl.innerText = 'Mood: Playing joyfully outside in the park! 🌳';
+                petEl.innerText = '🐕🌳';
+            } else {
+                btn.innerText = '🌳 Toggle Outside Dog';
+                statusEl.innerText = 'Mood: Resting cozily indoors by the TV 🛋️';
+                petEl.innerText = '🐕';
+            }
+        }
+
+        function spinWheel() {
+            const resultEl = document.getElementById('wheel-result');
+            resultEl.innerText = 'Spinning... 🎡';
+            let allItems = [...state.movies.map(m => m.title), ...state.shows.map(s => s.title)];
+            if (allItems.length === 0) allItems = ['Midnight in Paris', 'Starlight Romance'];
+
+            let count = 0;
+            const interval = setInterval(() => {
+                const randomItem = allItems[Math.floor(Math.random() * allItems.length)];
+                resultEl.innerText = randomItem;
+                count++;
+                if (count > 12) {
+                    clearInterval(interval);
+                    resultEl.innerText = `🎉 Date Night Pick: ${allItems[Math.floor(Math.random() * allItems.length)]} 💖`;
+                }
+            }, 100);
+        }
+
+        let popcornTimer = null;
+        let popcornScoreCount = 0;
+        function startPopcornGame() {
+            const box = document.getElementById('popcorn-game-box');
+            const startPrompt = document.getElementById('popcorn-start-prompt');
+            const btn = document.getElementById('popcorn-btn');
+            const scoreDisplay = document.getElementById('popcorn-score');
+
+            startPrompt.style.display = 'none';
+            btn.disabled = true;
+            btn.innerText = 'Game in Progress... 🍿';
+            popcornScoreCount = 0;
+            scoreDisplay.innerText = 'Score: 0';
+
+            let timeLeft = 30;
+            const spawner = setInterval(() => {
+                if (timeLeft <= 0) {
+                    clearInterval(spawner);
+                    return;
+                }
+                const kernel = document.createElement('div');
+                kernel.className = 'absolute text-2xl cursor-pointer select-none transition transform hover:scale-125';
+                kernel.innerText = '🍿';
+                kernel.style.left = Math.random() * 85 + '%';
+                kernel.style.top = Math.random() * 75 + '%';
+                kernel.onclick = () => {
+                    popcornScoreCount += 5;
+                    scoreDisplay.innerText = `Score: ${popcornScoreCount}`;
+                    kernel.remove();
+                };
+                box.appendChild(kernel);
+                setTimeout(() => kernel.remove(), 1200);
+            }, 600);
+
+            popcornTimer = setInterval(() => {
+                timeLeft--;
+                btn.innerText = `Time Left: ${timeLeft}s 🍿`;
+                if (timeLeft <= 0) {
+                    clearInterval(popcornTimer);
+                    btn.disabled = false;
+                    btn.innerText = 'Play Again 🍿';
+                    startPrompt.style.display = 'block';
+                    startPrompt.innerText = `Game Over! Final Score: ${popcornScoreCount} 🍿🎉`;
+                }
+            }, 1000);
+        }
+
+        function saveSchedule(e) {
+            e.preventDefault();
+            const title = document.getElementById('sched-title').value;
+            const date = document.getElementById('sched-date').value;
+            const time = document.getElementById('sched-time').value;
+            const snack = document.getElementById('sched-snack').value || 'Popcorn & Wine 🍷';
+
+            state.schedules.push({ id: Date.now(), title, date, time, snack });
+            localStorage.setItem('loveflix_schedules', JSON.stringify(state.schedules));
+            renderSchedules();
+            e.target.reset();
+        }
+
+        function renderSchedules() {
+            const list = document.getElementById('schedule-list');
+            list.innerHTML = '';
+            state.schedules.forEach(s => {
+                const item = document.createElement('div');
+                item.className = 'p-3 rounded-xl bg-neutral-900 border border-neutral-800 text-xs flex justify-between items-center';
+                item.innerHTML = `
+                    <div>
+                        <h5 class="font-bold text-white mb-0.5">${s.title}</h5>
+                        <p class="text-neutral-400">📅 ${s.date} at ${s.time} • 🍿 ${s.snack}</p>
+                    </div>
+                    <button onclick="deleteSchedule(${s.id})" class="text-neutral-500 hover:text-red-500 p-1">✕</button>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function deleteSchedule(id) {
+            state.schedules = state.schedules.filter(s => s.id !== id);
+            localStorage.setItem('loveflix_schedules', JSON.stringify(state.schedules));
+            renderSchedules();
+        }
+
+        function saveDiaryNote(e) {
+            e.preventDefault();
+            const text = document.getElementById('diary-text').value;
+            const date = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+            state.diary.unshift({ id: Date.now(), text, date });
+            localStorage.setItem('loveflix_diary', JSON.stringify(state.diary));
+            renderDiary();
+            e.target.reset();
+        }
+
+        function renderDiary() {
+            const list = document.getElementById('diary-list');
+            list.innerHTML = '';
+            state.diary.forEach(d => {
+                const item = document.createElement('div');
+                item.className = 'p-3 rounded-xl bg-neutral-900 border border-neutral-800 text-xs';
+                item.innerHTML = `
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-[10px] text-pink-400 font-semibold">${d.date}</span>
+                        <button onclick="deleteDiary(${d.id})" class="text-neutral-500 hover:text-red-500">✕</button>
+                    </div>
+                    <p class="text-neutral-200 leading-relaxed">${d.text}</p>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function deleteDiary(id) {
+            state.diary = state.diary.filter(d => d.id !== id);
+            localStorage.setItem('loveflix_diary', JSON.stringify(state.diary));
+            renderDiary();
+        }
+
+        const quizQuestions = [
+            { q: 'What is our ultimate movie marathon comfort snack?', options: ['Caramel Popcorn & Wine 🍷', 'Pizza & Soda 🍕', 'Chocolate & Strawberries 🍓', 'Ice Cream Sundae 🍨'], correct: 0 },
+            { q: 'Where is our dream romantic getaway destination?', options: ['Paris under the Eiffel Tower 🗼', 'Cozy cabin in the snow mountains 🏔️', 'Tropical beach sunset 🌴', 'Tokyo city lights 🌃'], correct: 0 }
+        ];
+
+        function initQuiz() { renderQuizQuestion(); }
+        function renderQuizQuestion() {
+            const qBox = document.getElementById('quiz-question-box');
+            const resBox = document.getElementById('quiz-result-box');
+            qBox.classList.remove('hidden');
+            resBox.classList.add('hidden');
+
+            const curr = quizQuestions[state.quiz.currentQ];
+            document.getElementById('quiz-q-title').innerText = `Question ${state.quiz.currentQ + 1}: ${curr.q}`;
+            const optContainer = document.getElementById('quiz-options');
+            optContainer.innerHTML = '';
+
+            curr.options.forEach((opt) => {
+                const btn = document.createElement('button');
+                btn.className = 'p-3 rounded-xl bg-neutral-900 border border-neutral-700 hover:border-pink-500 text-left text-xs font-semibold transition';
+                btn.innerText = opt;
+                btn.onclick = () => {
+                    if (state.quiz.currentQ + 1 < quizQuestions.length) {
+                        state.quiz.currentQ++;
+                        renderQuizQuestion();
+                    } else {
+                        qBox.classList.add('hidden');
+                        resBox.classList.remove('hidden');
+                    }
+                };
+                optContainer.appendChild(btn);
+            });
+        }
+        function resetQuiz() { state.quiz.currentQ = 0; renderQuizQuestion(); }
+
+        /* --- CHERRY VAULT (ADMIN SUITE) --- */
+        function handleMovieUpload(e) {
+            e.preventDefault();
+            const title = document.getElementById('upload-movie-title').value;
+            const genre = document.getElementById('upload-movie-genre').value;
+            const rating = document.getElementById('upload-movie-rating').value;
+            const poster = document.getElementById('upload-movie-poster').value;
+            const desc = document.getElementById('upload-movie-desc').value;
+            const fileInput = document.getElementById('upload-movie-file');
+
+            let videoUrl = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+            if (fileInput.files && fileInput.files[0]) {
+                videoUrl = URL.createObjectURL(fileInput.files[0]);
+            }
+
+            const newMovie = { id: 'm_' + Date.now(), title, genre, rating, poster, desc, videoUrl };
+            state.movies.push(newMovie);
+            localStorage.setItem('loveflix_movies', JSON.stringify(state.movies));
+            renderAllCatalogs();
+            renderCatalogManagement();
+            e.target.reset();
+            alertMessage('Movie uploaded successfully! 🎬');
+        }
+
+        let builderSeasonsCount = 1;
+        function initBuilderSeasons() {
+            const container = document.getElementById('builder-seasons-container');
+            container.innerHTML = `
+                <div class="season-builder-item p-3 bg-neutral-950 rounded-lg border border-neutral-800 space-y-3" data-season="1">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-pink-400">Season 1</span>
+                        <div class="space-x-2">
+                            <button type="button" onclick="addEpisodeInputBuilder(this)" class="px-2 py-1 bg-pink-600/20 hover:bg-pink-600 text-pink-300 hover:text-white rounded text-[10px] font-semibold transition">+ Add Episode</button>
+                        </div>
+                    </div>
+                    <div class="episodes-inputs-container space-y-3">
+                        <div class="ep-row p-2 bg-neutral-900 rounded border border-neutral-800 space-y-2">
+                            <input type="text" placeholder="Episode 1 Title" class="ep-title-input w-full bg-neutral-950 border border-neutral-700 rounded-lg p-2 text-xs text-white" required>
+                            <div>
+                                <label class="block text-[10px] text-neutral-400 uppercase mb-1">Episode 1 Video File (.mp4)</label>
+                                <input type="file" accept="video/*" class="ep-file-input w-full bg-neutral-950 border border-neutral-700 rounded-lg p-1.5 text-xs text-neutral-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[10px] file:bg-pink-600 file:text-white" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function addSeasonInputBuilder() {
+            builderSeasonsCount++;
+            const container = document.getElementById('builder-seasons-container');
+            const div = document.createElement('div');
+            div.className = 'season-builder-item p-3 bg-neutral-950 rounded-lg border border-neutral-800 space-y-3';
+            div.innerHTML = `
+                <div class="flex justify-between items-center">
+                    <span class="text-xs font-bold text-pink-400">Season ${builderSeasonsCount}</span>
+                    <div class="space-x-2">
+                        <button type="button" onclick="addEpisodeInputBuilder(this)" class="px-2 py-1 bg-pink-600/20 hover:bg-pink-600 text-pink-300 hover:text-white rounded text-[10px] font-semibold transition">+ Add Episode</button>
+                        <button type="button" onclick="this.closest('.season-builder-item').remove()" class="text-neutral-500 hover:text-red-500 text-xs">Remove Season</button>
+                    </div>
+                </div>
+                <div class="episodes-inputs-container space-y-3">
+                    <div class="ep-row p-2 bg-neutral-900 rounded border border-neutral-800 space-y-2">
+                        <input type="text" placeholder="Episode 1 Title" class="ep-title-input w-full bg-neutral-950 border border-neutral-700 rounded-lg p-2 text-xs text-white" required>
+                        <div>
+                            <label class="block text-[10px] text-neutral-400 uppercase mb-1">Episode 1 Video File (.mp4)</label>
+                            <input type="file" accept="video/*" class="ep-file-input w-full bg-neutral-950 border border-neutral-700 rounded-lg p-1.5 text-xs text-neutral-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[10px] file:bg-pink-600 file:text-white" required>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.appendChild(div);
+        }
+
+        function addEpisodeInputBuilder(btn) {
+            const seasonItem = btn.closest('.season-builder-item');
+            const epsContainer = seasonItem.querySelector('.episodes-inputs-container');
+            const epCount = epsContainer.querySelectorAll('.ep-row').length + 1;
+
+            const epDiv = document.createElement('div');
+            epDiv.className = 'ep-row p-2 bg-neutral-900 rounded border border-neutral-800 space-y-2 relative';
+            epDiv.innerHTML = `
+                <div class="flex justify-between items-center">
+                    <span class="text-[10px] text-neutral-400 font-bold uppercase">Episode ${epCount}</span>
+                    <button type="button" onclick="this.closest('.ep-row').remove()" class="text-neutral-500 hover:text-red-500 text-[10px]">Remove</button>
+                </div>
+                <input type="text" placeholder="Episode ${epCount} Title" class="ep-title-input w-full bg-neutral-950 border border-neutral-700 rounded-lg p-2 text-xs text-white" required>
+                <div>
+                    <label class="block text-[10px] text-neutral-400 uppercase mb-1">Episode ${epCount} Video File (.mp4)</label>
+                    <input type="file" accept="video/*" class="ep-file-input w-full bg-neutral-950 border border-neutral-700 rounded-lg p-1.5 text-xs text-neutral-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[10px] file:bg-pink-600 file:text-white" required>
+                </div>
+            `;
+            epsContainer.appendChild(epDiv);
+        }
+
+        function previewMoviePoster(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                document.getElementById('upload-movie-poster').value = url;
+            }
+        }
+
+        function previewShowPoster(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                document.getElementById('upload-show-poster').value = url;
+            }
+        }
+
+        function handleMovieUpload(e) {
+            e.preventDefault();
+            const title = document.getElementById('upload-movie-title').value;
+            const genre = document.getElementById('upload-movie-genre').value;
+            const rating = document.getElementById('upload-movie-rating').value;
+            let poster = document.getElementById('upload-movie-poster').value;
+            const desc = document.getElementById('upload-movie-desc').value;
+            const fileInput = document.getElementById('upload-movie-file');
+
+            if (!poster) {
+                poster = 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1200&q=80';
+            }
+
+            let videoUrl = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+            if (fileInput.files && fileInput.files[0]) {
+                videoUrl = URL.createObjectURL(fileInput.files[0]);
+            }
+
+            const newMovie = { id: 'm_' + Date.now(), title, genre, rating, poster, desc, videoUrl };
+            state.movies.push(newMovie);
+            localStorage.setItem('loveflix_movies', JSON.stringify(state.movies));
+            renderAllCatalogs();
+            renderCatalogManagement();
+            e.target.reset();
+            alertMessage('Movie uploaded successfully! 🎬');
+        }
+
+        function handleShowUpload(e) {
+            e.preventDefault();
+            const title = document.getElementById('upload-show-title').value;
+            const genre = document.getElementById('upload-show-genre').value;
+            const rating = document.getElementById('upload-show-rating').value;
+            let poster = document.getElementById('upload-show-poster').value;
+            const desc = document.getElementById('upload-show-desc').value;
+
+            if (!poster) {
+                poster = 'https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=1200&q=80';
+            }
+
+            const seasonItems = document.querySelectorAll('.season-builder-item');
+            let seasons = [];
+
+            seasonItems.forEach((item, idx) => {
+                const seasonNum = idx + 1;
+                const epRows = item.querySelectorAll('.ep-row');
+                let episodes = [];
+
+                epRows.forEach((epRow, epIdx) => {
+                    const epTitle = epRow.querySelector('.ep-title-input').value || `Episode ${epIdx + 1}`;
+                    const fileInput = epRow.querySelector('.ep-file-input');
+                    let vidUrl = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+                    if (fileInput.files && fileInput.files[0]) {
+                        vidUrl = URL.createObjectURL(fileInput.files[0]);
+                    }
+
+                    episodes.push({
+                        epNum: epIdx + 1,
+                        title: epTitle,
+                        videoUrl: vidUrl
+                    });
+                });
+
+                seasons.push({ seasonNum, episodes });
+            });
+
+            const newShow = { id: 's_' + Date.now(), title, genre, rating, poster, desc, seasons };
+            state.shows.push(newShow);
+            localStorage.setItem('loveflix_shows', JSON.stringify(state.shows));
+            renderAllCatalogs();
+            renderCatalogManagement();
+            e.target.reset();
+            initBuilderSeasons();
+            alertMessage('TV Series uploaded successfully! 📺');
+        }
+
+        function renderCatalogManagement() {
+            const list = document.getElementById('catalog-management-list');
+            list.innerHTML = '';
+            state.movies.forEach(m => {
+                const item = document.createElement('div');
+                item.className = 'p-3 rounded-xl bg-neutral-900 border border-neutral-800 text-xs flex justify-between items-center';
+                item.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <img src="${m.poster}" class="w-10 h-10 rounded object-cover">
+                        <div><span class="font-bold text-white">${m.title}</span><span class="text-[10px] text-pink-400 block">Movie</span></div>
+                    </div>
+                    <button onclick="deleteCatalogItem('movie', '${m.id}')" class="px-3 py-1 bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white rounded-lg transition">Delete</button>
+                `;
+                list.appendChild(item);
+            });
+            state.shows.forEach(s => {
+                const item = document.createElement('div');
+                item.className = 'p-3 rounded-xl bg-neutral-900 border border-neutral-800 text-xs flex justify-between items-center';
+                item.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <img src="${s.poster}" class="w-10 h-10 rounded object-cover">
+                        <div><span class="font-bold text-white">${s.title}</span><span class="text-[10px] text-pink-400 block">TV Series</span></div>
+                    </div>
+                    <button onclick="deleteCatalogItem('show', '${s.id}')" class="px-3 py-1 bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white rounded-lg transition">Delete</button>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function deleteCatalogItem(type, id) {
+            if (type === 'movie') {
+                state.movies = state.movies.filter(m => m.id !== id);
+                localStorage.setItem('loveflix_movies', JSON.stringify(state.movies));
+            } else {
+                state.shows = state.shows.filter(s => s.id !== id);
+                localStorage.setItem('loveflix_shows', JSON.stringify(state.shows));
+            }
+            renderAllCatalogs();
+            renderCatalogManagement();
+        }
+
+        function alertMessage(msg) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed top-20 right-6 z-50 glass-panel bg-neutral-900/95 border border-pink-500 text-white px-6 py-3 rounded-xl shadow-2xl text-sm font-bold animate-bounce';
+            toast.innerText = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3500);
+        }
+    </script>
+</body>
+</html>
